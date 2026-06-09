@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyATEVA8BKDzB-eKTCAsTVRd3cDzpp7lRhs",
@@ -16,29 +16,29 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
-
 const provider = new GoogleAuthProvider();
 
+// Google Sign-In
 document.getElementById('login-btn').addEventListener('click', () => {
-    signInWithPopup(auth, provider).catch((error) => console.error(error));
+    signInWithPopup(auth, provider).catch((error) => console.error("Auth Error:", error));
 });
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('admin-panel').style.display = 'flex'; // Changed to flex to match side-nav
         loadOrders();
     }
 });
 
-// Admin Functions with Currency Support
+// Admin Functions
 window.addRank = () => {
     push(ref(db, 'ranks'), {
         name: document.getElementById('r-name').value,
         price: document.getElementById('r-price').value,
-        currency: document.getElementById('r-currency').value, // Currency selection
-        description: document.getElementById('r-desc').value
-    }).then(() => alert("Rank Added Successfully!"));
+        currency: document.getElementById('r-currency').value,
+        description: document.getElementById('r-desc') ? document.getElementById('r-desc').value : ""
+    }).then(() => alert("Rank Deployed Successfully!"));
 };
 
 window.addCrate = () => {
@@ -46,29 +46,44 @@ window.addCrate = () => {
         name: document.getElementById('c-name').value,
         type: document.getElementById('c-type').value,
         price: document.getElementById('c-price').value,
-        currency: document.getElementById('c-currency').value // Added currency for crates too
-    }).then(() => alert("Crate Added Successfully!"));
+        currency: document.getElementById('c-currency').value
+    }).then(() => alert("Crate Deployed Successfully!"));
 };
 
+// Orders Management
 function loadOrders() {
+    const list = document.getElementById('order-list');
     onValue(ref(db, 'orders'), (snapshot) => {
-        const list = document.getElementById('order-list');
         list.innerHTML = '';
         if (snapshot.exists()) {
-            snapshot.forEach(child => {
-                const order = child.val();
-                list.innerHTML += `
-                    <div class="p-4 mb-2 bg-gray-900 border-l-4 border-red-600 rounded">
-                        <span class="font-bold text-red-400">${order.email}</span> 
-                        requested <strong>${order.item}</strong> 
-                        Status: <span class="text-green-400">${order.status}</span>
-                    </div>`;
+            snapshot.forEach((childSnapshot) => {
+                const orderKey = childSnapshot.key;
+                const order = childSnapshot.val();
+                
+                const div = document.createElement('div');
+                div.className = "p-5 bg-black border border-red-900 rounded-xl shadow-lg hover:border-red-500 transition flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <p class="text-red-400 font-bold">${order.email || 'Anonymous'}</p>
+                        <p class="text-white text-lg font-semibold">${order.item || 'N/A'}</p>
+                        <p class="text-sm text-gray-400">Status: <span class="text-green-400">${order.status || 'Pending'}</span></p>
+                    </div>
+                    <button onclick="removeOrder('${orderKey}')" class="text-red-600 hover:text-white text-xl font-bold p-2">✕</button>
+                `;
+                list.appendChild(div);
             });
         } else {
-            list.innerHTML = '<p class="text-gray-500 text-center">No orders yet.</p>';
+            list.innerHTML = '<p class="text-gray-500 italic text-center w-full">No active orders found.</p>';
         }
     });
 }
+
+// Global scope for HTML onclick
+window.removeOrder = (key) => {
+    if(confirm("Are you sure you want to delete this order?")) {
+        remove(ref(db, `orders/${key}`));
+    }
+};
 
 window.showTab = (id) => {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
