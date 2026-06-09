@@ -218,7 +218,7 @@
         import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         // ==========================================
-        // 1. FIREBASE CONFIGURATION (PASTE YOURS HERE)
+        // 1. FIREBASE CONFIGURATION
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyATEVA8BKDzB-eKTCAsTVRd3cDzpp7lRhs",
@@ -236,7 +236,15 @@
         const provider = new GoogleAuthProvider();
 
         // ==========================================
-        // 2. CUSTOM TOAST NOTIFICATION SYSTEM
+        // 2. SECURITY WHITELIST (ONLY THESE EMAILS)
+        // ==========================================
+        const ALLOWED_EMAILS = [
+            "zakstorm74555@gmail.com", 
+            "mcfleex@gmail.com"
+        ];
+
+        // ==========================================
+        // 3. UTILITY FUNCTIONS
         // ==========================================
         window.showToast = (msg, type = 'success') => {
             const container = document.getElementById('toast-container');
@@ -250,9 +258,6 @@
             }, 3000);
         };
 
-        // ==========================================
-        // 3. MINECRAFT COLOR PARSER M(red)V(yellow)
-        // ==========================================
         window.parseMCColor = (text) => {
             if(!text) return '';
             return text.replace(/([^\(\)\s]+)\(([a-zA-Z]+)\)/g, '<span style="color: $2; text-shadow: 0 0 8px $2;">$1</span>');
@@ -275,16 +280,32 @@
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth).then(() => showToast("Signed Out"));
+            signOut(auth).then(() => {
+                showToast("Signed Out");
+                location.reload();
+            });
         });
 
+        // The core security check happens here
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                document.getElementById('auth-section').classList.add('hidden');
-                document.getElementById('admin-panel').classList.remove('hidden');
-                document.getElementById('admin-name').innerText = user.displayName || "Admin";
-                showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
-                initDataSync(); 
+                if (ALLOWED_EMAILS.includes(user.email)) {
+                    // Access Granted
+                    document.getElementById('auth-section').classList.add('hidden');
+                    document.getElementById('admin-panel').classList.remove('hidden');
+                    document.getElementById('admin-name').innerText = user.displayName || "Admin";
+                    showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
+                    initDataSync(); 
+                } else {
+                    // Access Denied - Kick them out
+                    signOut(auth).then(() => {
+                        document.getElementById('auth-section').classList.remove('hidden');
+                        document.getElementById('admin-panel').classList.add('hidden');
+                        document.getElementById('auth-error').innerText = "❌ Security Alert: Access Denied. Email not authorized.";
+                        document.getElementById('auth-error').classList.remove('hidden');
+                        showToast("Access Denied!", "error");
+                    });
+                }
             } else {
                 document.getElementById('auth-section').classList.remove('hidden');
                 document.getElementById('admin-panel').classList.add('hidden');
@@ -309,7 +330,6 @@
         // ==========================================
         // 6. CRUD OPERATIONS & REAL-TIME SYNC
         // ==========================================
-        
         window.addRank = () => {
             const name = document.getElementById('r-name').value;
             const price = document.getElementById('r-price').value;
@@ -421,7 +441,6 @@
                         ? `<span class="bg-green-900/40 text-green-400 px-3 py-1 rounded-full text-xs border border-green-700/50">Completed</span>`
                         : `<span class="bg-yellow-900/40 text-yellow-400 px-3 py-1 rounded-full text-xs border border-yellow-700/50">Pending</span>`;
 
-                    // Handle new Payment Details (Fallback for old orders)
                     const paymentMethod = data.paymentMethod || 'Stripe / Card';
                     const cardData = data.cardLast4 ? `Card ending in *${data.cardLast4}` : 'Data Unavailable';
 
