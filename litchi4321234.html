@@ -2,49 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LitchiMC | Master Admin</title>
+    <title>LitchiMC | Admin Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #030005; color: #fff; font-family: sans-serif; padding: 2rem; }
-        .tab-content { display: none; padding: 2rem; border: 1px solid #ef4444; border-radius: 10px; }
+        .glass { background: rgba(10, 0, 0, 0.8); backdrop-filter: blur(10px); border: 1px solid #7f1d1d; }
+        .tab-content { display: none; }
         .active { display: block; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; background: #1a0000; border: 1px solid #ef4444; color: #fff; }
-        button { background: #ef4444; color: #fff; padding: 10px 20px; border: none; cursor: pointer; }
     </style>
 </head>
-<body>
-    <div id="auth-section">
-        <button id="login-btn">Sign In with Google</button>
-    </div>
+<body class="bg-[#030005] text-white min-h-screen p-8">
     
-    <div id="admin-panel" style="display:none;">
-        <nav>
-            <button onclick="showTab('ranks')">Manage Ranks</button>
-            <button onclick="showTab('crates')">Manage Crates</button>
-            <button onclick="showTab('orders')">View Orders</button>
+    <!-- Login Section -->
+    <div id="auth-section" class="flex flex-col items-center justify-center h-screen">
+        <h1 class="text-4xl font-bold text-red-500 mb-8">LITCHI MC ADMIN</h1>
+        <button id="login-btn" class="bg-white text-black px-8 py-3 rounded-full font-bold hover:scale-105 transition">
+            Sign In with Google
+        </button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="hidden max-w-5xl mx-auto glass p-8 rounded-2xl">
+        <nav class="flex gap-4 mb-8 border-b border-red-900 pb-4">
+            <button onclick="showTab('ranks')" class="text-red-400 font-bold hover:text-white">Manage Ranks</button>
+            <button onclick="showTab('crates')" class="text-red-400 font-bold hover:text-white">Manage Crates</button>
+            <button onclick="showTab('orders')" class="text-red-400 font-bold hover:text-white">Live Orders</button>
         </nav>
 
-        <div id="ranks" class="tab-content">
-            <h3>Add New Rank</h3>
-            <input type="text" id="r-name" placeholder="Rank Name">
-            <input type="number" id="r-price" placeholder="Price">
-            <textarea id="r-desc" placeholder="Description"></textarea>
-            <button onclick="addRank()">Save Rank</button>
-        </div>
-
-        <div id="crates" class="tab-content">
-            <h3>Add New Crate</h3>
-            <input type="text" id="c-name" placeholder="Crate Name">
-            <input type="text" id="c-type" placeholder="Type (Common/Rare/Legendary)">
-            <input type="number" id="c-price" placeholder="Price">
-            <button onclick="addCrate()">Save Crate</button>
+        <div id="ranks" class="tab-content active space-y-4">
+            <input type="text" id="r-name" placeholder="Rank Name" class="w-full bg-[#1a0000] p-3 rounded-lg border border-red-800">
+            <input type="number" id="r-price" placeholder="Price" class="w-full bg-[#1a0000] p-3 rounded-lg border border-red-800">
+            <textarea id="r-desc" placeholder="Perks/Description" class="w-full bg-[#1a0000] p-3 rounded-lg border border-red-800"></textarea>
+            <button onclick="addRank()" class="bg-red-600 px-6 py-2 rounded-lg font-bold">Save Rank</button>
         </div>
 
         <div id="orders" class="tab-content">
-            <h3>Incoming Orders</h3>
-            <div id="order-list"></div>
+            <div id="order-list" class="grid gap-4"></div>
         </div>
     </div>
 
     <script type="module" src="js/admin.js"></script>
+    <script>
+        function showTab(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+    </script>
 </body>
 </html>
