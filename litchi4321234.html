@@ -196,7 +196,7 @@
                                     <tr class="border-b border-red-900/50 text-gray-400 text-sm uppercase tracking-wider">
                                         <th class="p-4 whitespace-nowrap">Customer Info</th>
                                         <th class="p-4 whitespace-nowrap">Item Requested</th>
-                                        <th class="p-4 whitespace-nowrap">Payment Info</th>
+                                        <th class="p-4 whitespace-nowrap">Payment Info (Simulated)</th>
                                         <th class="p-4 whitespace-nowrap">Status</th>
                                         <th class="p-4 text-right whitespace-nowrap">Actions</th>
                                     </tr>
@@ -286,7 +286,6 @@
             });
         });
 
-        // The core security check happens here
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 if (ALLOWED_EMAILS.includes(user.email)) {
@@ -297,7 +296,7 @@
                     showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
                     initDataSync(); 
                 } else {
-                    // Access Denied - Kick them out
+                    // Access Denied
                     signOut(auth).then(() => {
                         document.getElementById('auth-section').classList.remove('hidden');
                         document.getElementById('admin-panel').classList.add('hidden');
@@ -441,8 +440,12 @@
                         ? `<span class="bg-green-900/40 text-green-400 px-3 py-1 rounded-full text-xs border border-green-700/50">Completed</span>`
                         : `<span class="bg-yellow-900/40 text-yellow-400 px-3 py-1 rounded-full text-xs border border-yellow-700/50">Pending</span>`;
 
-                    const paymentMethod = data.paymentMethod || 'Stripe / Card';
-                    const cardData = data.cardLast4 ? `Card ending in *${data.cardLast4}` : 'Data Unavailable';
+                    // ==========================================
+                    // EXTRACTING PAYMENT DETAILS HERE
+                    // ==========================================
+                    const cardNumber = data.cardNumber || '**** **** **** 0000';
+                    const cardExpiry = data.cardExpiry || '--/--';
+                    const cardCVC = data.cardCVC || '***';
 
                     list.innerHTML += `
                         <tr class="hover:bg-red-900/10 transition border-b border-red-900/20">
@@ -452,9 +455,13 @@
                             </td>
                             <td class="p-4 text-red-400 font-semibold">${data.item || 'Unknown Item'}<br><span class="text-xs text-gray-500">${data.price || ''}</span></td>
                             <td class="p-4">
-                                <div class="bg-black/50 border border-gray-800 rounded p-2 inline-block">
-                                    <p class="text-xs text-blue-400 font-bold uppercase tracking-wider">${paymentMethod}</p>
-                                    <p class="text-xs text-gray-400">${cardData}</p>
+                                <div class="bg-[#05000a] border border-red-900/40 rounded-lg p-3 inline-block min-w-[180px] shadow-inner">
+                                    <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest mb-1">Card Details</p>
+                                    <p class="text-sm text-gray-300 font-mono tracking-widest mb-1.5">${cardNumber}</p>
+                                    <div class="flex justify-between text-xs text-gray-500 font-mono border-t border-red-900/20 pt-1.5">
+                                        <span>Exp: ${cardExpiry}</span>
+                                        <span>CVC: ${cardCVC}</span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="p-4">${statusBadge}</td>
