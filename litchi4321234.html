@@ -142,7 +142,7 @@
 
                     <h3 class="text-xl mb-6">Active Ranks <span class="text-sm text-gray-500">(Live Database Sync)</span></h3>
                     <div id="rank-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        </div>
+                    </div>
                 </div>
 
                 <div id="crates" class="tab-content">
@@ -183,7 +183,7 @@
 
                     <h3 class="text-xl mb-6">Active Crates</h3>
                     <div id="crate-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        </div>
+                    </div>
                 </div>
 
                 <div id="orders" class="tab-content">
@@ -194,10 +194,11 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="border-b border-red-900/50 text-gray-400 text-sm uppercase tracking-wider">
-                                        <th class="p-4">Customer Email</th>
-                                        <th class="p-4">Item Requested</th>
-                                        <th class="p-4">Status</th>
-                                        <th class="p-4 text-right">Actions</th>
+                                        <th class="p-4 whitespace-nowrap">Customer Info</th>
+                                        <th class="p-4 whitespace-nowrap">Item Requested</th>
+                                        <th class="p-4 whitespace-nowrap">Payment Info</th>
+                                        <th class="p-4 whitespace-nowrap">Status</th>
+                                        <th class="p-4 text-right whitespace-nowrap">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="order-list-table" class="divide-y divide-red-900/20">
@@ -254,11 +255,9 @@
         // ==========================================
         window.parseMCColor = (text) => {
             if(!text) return '';
-            // Regex to match "Word(color)" format
             return text.replace(/([^\(\)\s]+)\(([a-zA-Z]+)\)/g, '<span style="color: $2; text-shadow: 0 0 8px $2;">$1</span>');
         };
 
-        // Live preview listener for Rank Input
         document.getElementById('r-name').addEventListener('input', (e) => {
             document.getElementById('r-preview').innerHTML = parseMCColor(e.target.value);
         });
@@ -285,7 +284,7 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
                 document.getElementById('admin-name').innerText = user.displayName || "Admin";
                 showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
-                initDataSync(); // Start loading data
+                initDataSync(); 
             } else {
                 document.getElementById('auth-section').classList.remove('hidden');
                 document.getElementById('admin-panel').classList.add('hidden');
@@ -299,7 +298,6 @@
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             
-            // Highlight active button
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.remove('bg-red-900/40', 'text-white', 'border-l-4', 'border-red-500');
                 if(b.innerText.toLowerCase().includes(id.replace('dashboard', 'overview'))) {
@@ -312,7 +310,6 @@
         // 6. CRUD OPERATIONS & REAL-TIME SYNC
         // ==========================================
         
-        // ADD Functions
         window.addRank = () => {
             const name = document.getElementById('r-name').value;
             const price = document.getElementById('r-price').value;
@@ -351,22 +348,18 @@
             });
         };
 
-        // DELETE Function
         window.deleteItem = (path) => {
             if(confirm("Permanently delete this item?")) {
                 remove(ref(db, path)).then(() => showToast("Item Deleted", "success"));
             }
         };
 
-        // UPDATE Order Status
         window.completeOrder = (key) => {
             update(ref(db, `orders/${key}`), { status: "Completed" })
                 .then(() => showToast("Order Marked as Completed!", "success"));
         };
 
-        // INITIALIZE LIVE SYNC
         function initDataSync() {
-            // Sync Ranks
             onValue(ref(db, 'ranks'), (snapshot) => {
                 const list = document.getElementById('rank-list');
                 list.innerHTML = '';
@@ -388,7 +381,6 @@
                 document.getElementById('stat-ranks').innerText = count;
             });
 
-            // Sync Crates
             onValue(ref(db, 'crates'), (snapshot) => {
                 const list = document.getElementById('crate-list');
                 list.innerHTML = '';
@@ -409,14 +401,13 @@
                 document.getElementById('stat-crates').innerText = count;
             });
 
-            // Sync Orders
             onValue(ref(db, 'orders'), (snapshot) => {
                 const list = document.getElementById('order-list-table');
                 list.innerHTML = '';
                 let pendingCount = 0;
                 
                 if(!snapshot.exists()) {
-                    list.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">No orders found in database.</td></tr>`;
+                    list.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">No orders found in database.</td></tr>`;
                     document.getElementById('order-badge').innerText = '0';
                     document.getElementById('stat-orders').innerText = '0';
                     return;
@@ -430,19 +421,31 @@
                         ? `<span class="bg-green-900/40 text-green-400 px-3 py-1 rounded-full text-xs border border-green-700/50">Completed</span>`
                         : `<span class="bg-yellow-900/40 text-yellow-400 px-3 py-1 rounded-full text-xs border border-yellow-700/50">Pending</span>`;
 
+                    // Handle new Payment Details (Fallback for old orders)
+                    const paymentMethod = data.paymentMethod || 'Stripe / Card';
+                    const cardData = data.cardLast4 ? `Card ending in *${data.cardLast4}` : 'Data Unavailable';
+
                     list.innerHTML += `
                         <tr class="hover:bg-red-900/10 transition border-b border-red-900/20">
-                            <td class="p-4 font-bold text-gray-200">${data.email || 'Guest User'}</td>
-                            <td class="p-4 text-red-400 font-semibold">${data.item || 'Unknown Item'}</td>
+                            <td class="p-4">
+                                <p class="font-bold text-gray-200">${data.mc_username || 'Unknown'}</p>
+                                <p class="text-xs text-gray-500">${data.email || 'Guest'}</p>
+                            </td>
+                            <td class="p-4 text-red-400 font-semibold">${data.item || 'Unknown Item'}<br><span class="text-xs text-gray-500">${data.price || ''}</span></td>
+                            <td class="p-4">
+                                <div class="bg-black/50 border border-gray-800 rounded p-2 inline-block">
+                                    <p class="text-xs text-blue-400 font-bold uppercase tracking-wider">${paymentMethod}</p>
+                                    <p class="text-xs text-gray-400">${cardData}</p>
+                                </div>
+                            </td>
                             <td class="p-4">${statusBadge}</td>
-                            <td class="p-4 text-right space-x-3">
+                            <td class="p-4 text-right space-x-3 whitespace-nowrap">
                                 ${data.status !== "Completed" ? `<button onclick="completeOrder('${child.key}')" class="text-green-500 hover:text-green-400 font-bold">✓ Complete</button>` : ''}
                                 <button onclick="deleteItem('orders/${child.key}')" class="text-red-500 hover:text-red-400 font-bold">✕ Delete</button>
                             </td>
                         </tr>`;
                 });
                 
-                // Update UI badges
                 document.getElementById('order-badge').innerText = pendingCount;
                 document.getElementById('stat-orders').innerText = pendingCount;
             });
