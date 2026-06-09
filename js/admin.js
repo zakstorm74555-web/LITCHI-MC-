@@ -2,7 +2,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-const firebaseConfig = { /* Wahi pura config yahan paste karo */ };
+const firebaseConfig = { const firebaseConfig = {
+  apiKey: "AIzaSyATEVA8BKDzB-eKTCAsTVRd3cDzpp7lRhs",
+  authDomain: "heroflix-d64ac.firebaseapp.com",
+  databaseURL: "https://heroflix-d64ac-default-rtdb.firebaseio.com",
+  projectId: "heroflix-d64ac",
+  storageBucket: "heroflix-d64ac.firebasestorage.app",
+  messagingSenderId: "451233952566",
+  appId: "1:451233952566:web:b48a10bd8e1dbcabb77997",
+  measurementId: "G-X00Z042LD4"
+}; 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
