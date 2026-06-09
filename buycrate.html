@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy Crates | Litchi Mc</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #030005; color: #fff; font-family: 'Rajdhani', sans-serif; padding: 2rem; }
+        .crate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .crate-card { background: rgba(5,0,15,0.88); border: 1px solid #a855f7; border-radius: 18px; padding: 2rem; text-align: center; }
+        .crate-price { font-size: 1.5rem; color: #f59e0b; font-weight: 700; margin: 1rem 0; }
+        .buy-btn { background: #a855f7; color: #fff; padding: 0.8rem 2rem; border-radius: 50px; text-decoration: none; display: inline-block; transition: 0.3s; }
+        .buy-btn:hover { background: #7c3aed; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; font-family: 'Cinzel Decorative'; color: #a855f7;">Available Crates</h1>
+    <div id="crate-container" class="crate-grid">
+        <!-- Crates yahan se load hongi -->
+    </div>
+
+    <script type="module" src="js/buycrate.js"></script>
+</body>
+</html>
