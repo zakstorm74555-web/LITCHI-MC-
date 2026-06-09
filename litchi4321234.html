@@ -2,54 +2,450 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LitchiMC Admin Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LitchiMC | Master Control System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
     <style>
-        .sidebar { background: #0a0a0a; border-right: 1px solid #330000; }
-        .card-glass { background: rgba(20, 0, 0, 0.6); backdrop-filter: blur(10px); border: 1px solid #450a0a; }
-        .active { display: block !important; }
+        body { font-family: 'Rajdhani', sans-serif; background: #030005; color: #e2e8f0; overflow-x: hidden; }
+        h1, h2, h3, .mc-font { font-family: 'Cinzel Decorative', serif; }
+        
+        /* Glassmorphism & Neon Effects */
+        .glass-panel { background: rgba(15, 0, 0, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(239, 68, 68, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); }
+        .glass-panel:hover { border-color: rgba(239, 68, 68, 0.5); box-shadow: 0 8px 32px rgba(239, 68, 68, 0.15); }
+        .neon-input { background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(239, 68, 68, 0.3); color: white; transition: all 0.3s ease; }
+        .neon-input:focus { outline: none; border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+        .neon-btn { background: linear-gradient(135deg, #b91c1c, #ef4444); transition: all 0.3s ease; }
+        .neon-btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #7f1d1d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ef4444; }
+
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 16px 24px; border-radius: 8px; font-weight: 700; color: white; animation: slideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; display: flex; align-items: center; gap: 10px; }
+        .toast.success { background: rgba(16, 185, 129, 0.9); border: 1px solid #059669; }
+        .toast.error { background: rgba(220, 38, 38, 0.9); border: 1px solid #b91c1c; }
+        .toast.fade-out { animation: fadeOut 0.4s ease-out forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { transform: translateX(100%); opacity: 0; } }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-[#030005] text-white flex h-screen">
+<body class="flex h-screen overflow-hidden">
 
-    <div id="auth-section" class="flex-1 flex items-center justify-center">
-        <button id="login-btn" class="bg-red-600 hover:bg-red-700 px-8 py-3 rounded-xl font-bold">Secure Access: Sign In</button>
+    <div id="toast-container"></div>
+
+    <div id="auth-section" class="w-full h-full flex flex-col items-center justify-center relative z-10 bg-[url('bg.jpg')] bg-cover bg-center">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+        <div class="glass-panel p-12 rounded-3xl text-center relative z-20 max-w-md w-full">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-full border-2 border-red-500 flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.5)]">
+                <span class="text-4xl">🍒</span>
+            </div>
+            <h1 class="text-4xl text-red-500 mb-2">LITCHI MC</h1>
+            <p class="text-gray-400 mb-8 tracking-widest text-sm uppercase">Master Admin Terminal</p>
+            <button id="login-btn" class="neon-btn w-full py-4 rounded-xl font-bold text-lg text-white tracking-wide flex items-center justify-center gap-3">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                Authorize via Google
+            </button>
+            <p id="auth-error" class="text-red-500 mt-4 text-sm hidden"></p>
+        </div>
     </div>
 
-    <div id="admin-panel" class="hidden flex w-full">
-        <aside class="sidebar w-64 p-6 flex flex-col gap-6">
-            <h2 class="text-xl font-bold text-red-500">LITCHI DASHBOARD</h2>
-            <button onclick="showTab('ranks')" class="text-left hover:text-red-400">Manage Ranks</button>
-            <button onclick="showTab('crates')" class="text-left hover:text-red-400">Manage Crates</button>
-            <button onclick="showTab('orders')" class="text-left hover:text-red-400">Live Orders</button>
+    <div id="admin-panel" class="hidden w-full h-full flex">
+        
+        <aside class="w-72 bg-[#05000a] border-r border-red-900/50 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.8)] z-20">
+            <div class="p-8 text-center border-b border-red-900/30">
+                <h1 class="text-2xl text-red-500 tracking-wider">LITCHI MC</h1>
+                <p class="text-xs text-gray-500 uppercase mt-1">Control Center</p>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <button onclick="switchTab('dashboard')" class="nav-btn w-full text-left px-6 py-3 rounded-xl text-gray-300 hover:bg-red-900/40 hover:text-white transition">📊 Dashboard Overview</button>
+                <button onclick="switchTab('ranks')" class="nav-btn w-full text-left px-6 py-3 rounded-xl text-gray-300 hover:bg-red-900/40 hover:text-white transition">👑 Manage Ranks</button>
+                <button onclick="switchTab('crates')" class="nav-btn w-full text-left px-6 py-3 rounded-xl text-gray-300 hover:bg-red-900/40 hover:text-white transition">🗝️ Manage Crates</button>
+                <button onclick="switchTab('orders')" class="nav-btn w-full text-left px-6 py-3 rounded-xl text-gray-300 hover:bg-red-900/40 hover:text-white transition">🛒 Live Orders <span id="order-badge" class="ml-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">0</span></button>
+            </nav>
+            <div class="p-6 border-t border-red-900/30">
+                <div class="flex items-center gap-3 text-sm">
+                    <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-bold">G</div>
+                    <div>
+                        <p class="text-white font-bold" id="admin-name">Ghost</p>
+                        <p class="text-red-400 text-xs cursor-pointer hover:underline" id="logout-btn">Sign Out</p>
+                    </div>
+                </div>
+            </div>
         </aside>
 
-        <main class="flex-1 p-8 overflow-y-auto">
-            <div id="ranks" class="tab-content hidden card-glass p-6 rounded-2xl">
-                <h2 class="text-2xl mb-6">Manage Ranks</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="r-name" placeholder="Rank Name" class="bg-black p-3 border border-red-900 rounded">
-                    <input type="number" id="r-price" placeholder="Price" class="bg-black p-3 border border-red-900 rounded">
-                    <select id="r-currency" class="bg-black p-3 border border-red-900 rounded col-span-2">
-                        <option value="USD">USD ($)</option><option value="PKR">PKR (₨)</option>
-                    </select>
-                </div>
-                <button onclick="addRank()" class="mt-4 bg-red-600 w-full py-3 rounded-lg font-bold">Deploy Rank</button>
-            </div>
-
-            <div id="orders" class="tab-content hidden">
-                <h2 class="text-2xl mb-6">Incoming Orders</h2>
-                <div id="order-list" class="space-y-3">
+        <main class="flex-1 bg-gradient-to-br from-[#0a0005] to-[#030005] overflow-y-auto relative">
+            <div class="absolute top-0 left-0 w-full h-64 bg-red-900/10 blur-[100px] pointer-events-none"></div>
+            
+            <div class="p-10 relative z-10 max-w-7xl mx-auto">
+                
+                <div id="dashboard" class="tab-content active">
+                    <h2 class="text-3xl text-white mb-8">System <span class="text-red-500">Overview</span></h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        <div class="glass-panel p-6 rounded-2xl flex items-center justify-between">
+                            <div><p class="text-gray-400 text-sm uppercase tracking-wider">Total Ranks</p><h3 class="text-4xl text-white mt-2" id="stat-ranks">0</h3></div>
+                            <div class="text-5xl opacity-20">👑</div>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl flex items-center justify-between">
+                            <div><p class="text-gray-400 text-sm uppercase tracking-wider">Total Crates</p><h3 class="text-4xl text-white mt-2" id="stat-crates">0</h3></div>
+                            <div class="text-5xl opacity-20">🗝️</div>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl flex items-center justify-between border-red-500/50">
+                            <div><p class="text-gray-400 text-sm uppercase tracking-wider">Pending Orders</p><h3 class="text-4xl text-red-400 mt-2" id="stat-orders">0</h3></div>
+                            <div class="text-5xl opacity-20">🛒</div>
+                        </div>
                     </div>
+                </div>
+
+                <div id="ranks" class="tab-content">
+                    <h2 class="text-3xl text-white mb-8">Manage <span class="text-red-500">Ranks</span></h2>
+                    
+                    <div class="glass-panel p-8 rounded-2xl mb-10">
+                        <h3 class="text-xl mb-6 border-b border-red-900/50 pb-3">Deploy New Rank</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">Rank Name (Use formatting e.g., M(red)V(yellow)P(blue))</label>
+                                <input type="text" id="r-name" class="neon-input w-full p-4 rounded-xl" placeholder="e.g. M(red)V(yellow)P(blue)">
+                                <p class="text-xs text-gray-500 mt-2">Live Preview: <span id="r-preview" class="font-bold text-lg bg-black/50 px-2 py-1 rounded"></span></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">Price</label>
+                                    <input type="number" id="r-price" class="neon-input w-full p-4 rounded-xl" placeholder="0.00">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">Currency</label>
+                                    <select id="r-currency" class="neon-input w-full p-4 rounded-xl bg-black">
+                                        <option value="USD">USD ($)</option>
+                                        <option value="PKR">PKR (₨)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="INR">INR (₹)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm text-gray-400 mb-2">Features/Description (Comma separated)</label>
+                                <textarea id="r-desc" class="neon-input w-full p-4 rounded-xl h-24" placeholder="Fly command, Custom prefix, 5 Homes..."></textarea>
+                            </div>
+                        </div>
+                        <button onclick="addRank()" class="neon-btn mt-6 px-8 py-3 rounded-xl font-bold tracking-wide">Deploy to Server</button>
+                    </div>
+
+                    <h3 class="text-xl mb-6">Active Ranks <span class="text-sm text-gray-500">(Live Database Sync)</span></h3>
+                    <div id="rank-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        </div>
+                </div>
+
+                <div id="crates" class="tab-content">
+                    <h2 class="text-3xl text-white mb-8">Manage <span class="text-red-500">Crates</span></h2>
+                    
+                    <div class="glass-panel p-8 rounded-2xl mb-10">
+                        <h3 class="text-xl mb-6 border-b border-red-900/50 pb-3">Deploy New Crate</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">Crate Name (Colors supported)</label>
+                                <input type="text" id="c-name" class="neon-input w-full p-4 rounded-xl" placeholder="e.g. Legendary(gold)">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">Type</label>
+                                <select id="c-type" class="neon-input w-full p-4 rounded-xl bg-black">
+                                    <option value="Common">Common</option>
+                                    <option value="Rare">Rare</option>
+                                    <option value="Mythic">Mythic</option>
+                                    <option value="Legendary">Legendary</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">Price</label>
+                                    <input type="number" id="c-price" class="neon-input w-full p-4 rounded-xl" placeholder="0.00">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">Currency</label>
+                                    <select id="c-currency" class="neon-input w-full p-4 rounded-xl bg-black">
+                                        <option value="USD">USD</option>
+                                        <option value="PKR">PKR</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="addCrate()" class="neon-btn mt-6 px-8 py-3 rounded-xl font-bold tracking-wide">Deploy Crate</button>
+                    </div>
+
+                    <h3 class="text-xl mb-6">Active Crates</h3>
+                    <div id="crate-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        </div>
+                </div>
+
+                <div id="orders" class="tab-content">
+                    <h2 class="text-3xl text-white mb-8">Live <span class="text-red-500">Orders Management</span></h2>
+                    
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-red-900/50 text-gray-400 text-sm uppercase tracking-wider">
+                                        <th class="p-4">Customer Email</th>
+                                        <th class="p-4">Item Requested</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="order-list-table" class="divide-y divide-red-900/20">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
 
-    <script type="module" src="js/admin.js"></script>
-    <script>
-        function showTab(id) {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // ==========================================
+        // 1. FIREBASE CONFIGURATION (PASTE YOURS HERE)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyATEVA8BKDzB-eKTCAsTVRd3cDzpp7lRhs",
+            authDomain: "heroflix-d64ac.firebaseapp.com",
+            databaseURL: "https://heroflix-d64ac-default-rtdb.firebaseio.com",
+            projectId: "heroflix-d64ac",
+            storageBucket: "heroflix-d64ac.firebasestorage.app",
+            messagingSenderId: "451233952566",
+            appId: "1:451233952566:web:b48a10bd8e1dbcabb77997"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        // ==========================================
+        // 2. CUSTOM TOAST NOTIFICATION SYSTEM
+        // ==========================================
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = type === 'success' ? `✅ ${msg}` : `⚠️ ${msg}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        };
+
+        // ==========================================
+        // 3. MINECRAFT COLOR PARSER M(red)V(yellow)
+        // ==========================================
+        window.parseMCColor = (text) => {
+            if(!text) return '';
+            // Regex to match "Word(color)" format
+            return text.replace(/([^\(\)\s]+)\(([a-zA-Z]+)\)/g, '<span style="color: $2; text-shadow: 0 0 8px $2;">$1</span>');
+        };
+
+        // Live preview listener for Rank Input
+        document.getElementById('r-name').addEventListener('input', (e) => {
+            document.getElementById('r-preview').innerHTML = parseMCColor(e.target.value);
+        });
+
+        // ==========================================
+        // 4. AUTHENTICATION LOGIC
+        // ==========================================
+        document.getElementById('login-btn').addEventListener('click', () => {
+            document.getElementById('auth-error').classList.add('hidden');
+            signInWithPopup(auth, provider).catch((error) => {
+                document.getElementById('auth-error').innerText = error.message;
+                document.getElementById('auth-error').classList.remove('hidden');
+                showToast("Authentication Failed", "error");
+            });
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth).then(() => showToast("Signed Out"));
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('admin-name').innerText = user.displayName || "Admin";
+                showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
+                initDataSync(); // Start loading data
+            } else {
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('admin-panel').classList.add('hidden');
+            }
+        });
+
+        // ==========================================
+        // 5. TAB NAVIGATION SYSTEM
+        // ==========================================
+        window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            
+            // Highlight active button
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('bg-red-900/40', 'text-white', 'border-l-4', 'border-red-500');
+                if(b.innerText.toLowerCase().includes(id.replace('dashboard', 'overview'))) {
+                    b.classList.add('bg-red-900/40', 'text-white', 'border-l-4', 'border-red-500');
+                }
+            });
+        };
+
+        // ==========================================
+        // 6. CRUD OPERATIONS & REAL-TIME SYNC
+        // ==========================================
+        
+        // ADD Functions
+        window.addRank = () => {
+            const name = document.getElementById('r-name').value;
+            const price = document.getElementById('r-price').value;
+            if(!name || !price) return showToast("Please fill Name and Price!", "error");
+
+            push(ref(db, 'ranks'), {
+                name: name,
+                price: price,
+                currency: document.getElementById('r-currency').value,
+                description: document.getElementById('r-desc').value,
+                timestamp: Date.now()
+            }).then(() => {
+                showToast("Rank Deployed Successfully!");
+                document.getElementById('r-name').value = '';
+                document.getElementById('r-price').value = '';
+                document.getElementById('r-desc').value = '';
+                document.getElementById('r-preview').innerHTML = '';
+            });
+        };
+
+        window.addCrate = () => {
+            const name = document.getElementById('c-name').value;
+            const price = document.getElementById('c-price').value;
+            if(!name || !price) return showToast("Please fill Name and Price!", "error");
+
+            push(ref(db, 'crates'), {
+                name: name,
+                type: document.getElementById('c-type').value,
+                price: price,
+                currency: document.getElementById('c-currency').value,
+                timestamp: Date.now()
+            }).then(() => {
+                showToast("Crate Deployed Successfully!");
+                document.getElementById('c-name').value = '';
+                document.getElementById('c-price').value = '';
+            });
+        };
+
+        // DELETE Function
+        window.deleteItem = (path) => {
+            if(confirm("Permanently delete this item?")) {
+                remove(ref(db, path)).then(() => showToast("Item Deleted", "success"));
+            }
+        };
+
+        // UPDATE Order Status
+        window.completeOrder = (key) => {
+            update(ref(db, `orders/${key}`), { status: "Completed" })
+                .then(() => showToast("Order Marked as Completed!", "success"));
+        };
+
+        // INITIALIZE LIVE SYNC
+        function initDataSync() {
+            // Sync Ranks
+            onValue(ref(db, 'ranks'), (snapshot) => {
+                const list = document.getElementById('rank-list');
+                list.innerHTML = '';
+                let count = 0;
+                snapshot.forEach(child => {
+                    count++;
+                    const data = child.val();
+                    const parsedName = parseMCColor(data.name);
+                    list.innerHTML += `
+                        <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between relative group">
+                            <button onclick="deleteItem('ranks/${child.key}')" class="absolute top-3 right-3 text-red-500 opacity-0 group-hover:opacity-100 transition bg-black/50 p-2 rounded-full hover:bg-red-600 hover:text-white">🗑️</button>
+                            <div>
+                                <h3 class="text-2xl font-bold mb-1 mc-font">${parsedName}</h3>
+                                <p class="text-red-400 font-bold mb-3">${data.price} ${data.currency}</p>
+                                <p class="text-sm text-gray-400">${data.description || 'No description provided.'}</p>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('stat-ranks').innerText = count;
+            });
+
+            // Sync Crates
+            onValue(ref(db, 'crates'), (snapshot) => {
+                const list = document.getElementById('crate-list');
+                list.innerHTML = '';
+                let count = 0;
+                snapshot.forEach(child => {
+                    count++;
+                    const data = child.val();
+                    const parsedName = parseMCColor(data.name);
+                    const typeColor = data.type === 'Legendary' ? 'text-yellow-400' : 'text-purple-400';
+                    list.innerHTML += `
+                        <div class="glass-panel p-5 rounded-2xl relative group border-t-4 border-purple-500">
+                            <button onclick="deleteItem('crates/${child.key}')" class="absolute top-3 right-3 text-red-500 opacity-0 group-hover:opacity-100 transition bg-black/50 p-2 rounded-full hover:bg-red-600 hover:text-white">🗑️</button>
+                            <h3 class="text-2xl font-bold mb-1 mc-font">${parsedName}</h3>
+                            <span class="${typeColor} text-xs uppercase tracking-wider font-bold">${data.type} Crate</span>
+                            <p class="text-red-400 font-bold mt-3">${data.price} ${data.currency}</p>
+                        </div>`;
+                });
+                document.getElementById('stat-crates').innerText = count;
+            });
+
+            // Sync Orders
+            onValue(ref(db, 'orders'), (snapshot) => {
+                const list = document.getElementById('order-list-table');
+                list.innerHTML = '';
+                let pendingCount = 0;
+                
+                if(!snapshot.exists()) {
+                    list.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">No orders found in database.</td></tr>`;
+                    document.getElementById('order-badge').innerText = '0';
+                    document.getElementById('stat-orders').innerText = '0';
+                    return;
+                }
+
+                snapshot.forEach(child => {
+                    const data = child.val();
+                    if(data.status !== "Completed") pendingCount++;
+                    
+                    const statusBadge = data.status === "Completed" 
+                        ? `<span class="bg-green-900/40 text-green-400 px-3 py-1 rounded-full text-xs border border-green-700/50">Completed</span>`
+                        : `<span class="bg-yellow-900/40 text-yellow-400 px-3 py-1 rounded-full text-xs border border-yellow-700/50">Pending</span>`;
+
+                    list.innerHTML += `
+                        <tr class="hover:bg-red-900/10 transition border-b border-red-900/20">
+                            <td class="p-4 font-bold text-gray-200">${data.email || 'Guest User'}</td>
+                            <td class="p-4 text-red-400 font-semibold">${data.item || 'Unknown Item'}</td>
+                            <td class="p-4">${statusBadge}</td>
+                            <td class="p-4 text-right space-x-3">
+                                ${data.status !== "Completed" ? `<button onclick="completeOrder('${child.key}')" class="text-green-500 hover:text-green-400 font-bold">✓ Complete</button>` : ''}
+                                <button onclick="deleteItem('orders/${child.key}')" class="text-red-500 hover:text-red-400 font-bold">✕ Delete</button>
+                            </td>
+                        </tr>`;
+                });
+                
+                // Update UI badges
+                document.getElementById('order-badge').innerText = pendingCount;
+                document.getElementById('stat-orders').innerText = pendingCount;
+            });
         }
     </script>
 </body>
