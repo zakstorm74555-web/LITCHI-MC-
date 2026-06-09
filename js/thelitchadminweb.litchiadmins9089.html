@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Paradox Studio | Master Admin</title>
+    <style>
+        body { background: #030005; color: #fff; font-family: sans-serif; padding: 2rem; }
+        .tab-content { display: none; padding: 2rem; border: 1px solid #ef4444; border-radius: 10px; }
+        .active { display: block; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; background: #1a0000; border: 1px solid #ef4444; color: #fff; }
+        button { background: #ef4444; color: #fff; padding: 10px 20px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="auth-section">
+        <button id="login-btn">Sign In with Google</button>
+    </div>
+    
+    <div id="admin-panel" style="display:none;">
+        <nav>
+            <button onclick="showTab('ranks')">Manage Ranks</button>
+            <button onclick="showTab('crates')">Manage Crates</button>
+            <button onclick="showTab('orders')">View Orders</button>
+        </nav>
+
+        <div id="ranks" class="tab-content">
+            <h3>Add New Rank</h3>
+            <input type="text" id="r-name" placeholder="Rank Name">
+            <input type="number" id="r-price" placeholder="Price">
+            <textarea id="r-desc" placeholder="Description"></textarea>
+            <button onclick="addRank()">Save Rank</button>
+        </div>
+
+        <div id="crates" class="tab-content">
+            <h3>Add New Crate</h3>
+            <input type="text" id="c-name" placeholder="Crate Name">
+            <input type="text" id="c-type" placeholder="Type (Common/Rare/Legendary)">
+            <input type="number" id="c-price" placeholder="Price">
+            <button onclick="addCrate()">Save Crate</button>
+        </div>
+
+        <div id="orders" class="tab-content">
+            <h3>Incoming Orders</h3>
+            <div id="order-list"></div>
+        </div>
+    </div>
+
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
