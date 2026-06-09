@@ -2,46 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LitchiMC | Admin Master</title>
+    <title>LitchiMC | Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass { background: rgba(10, 0, 0, 0.8); backdrop-filter: blur(10px); border: 1px solid #7f1d1d; }
+        .glass-card { background: rgba(15, 0, 0, 0.7); backdrop-filter: blur(12px); border: 1px solid #450a0a; }
         .tab-content { display: none; }
         .active { display: block; }
     </style>
 </head>
-<body class="bg-[#030005] text-white min-h-screen p-8">
-    
-    <!-- Login Section -->
-    <div id="auth-section" class="flex flex-col items-center justify-center h-screen">
-        <h1 class="text-4xl font-bold text-red-500 mb-8">LITCHI MC ADMIN</h1>
-        <button id="login-btn" class="bg-white text-black px-8 py-3 rounded-full font-bold hover:scale-105 transition">
-            Sign In with Google
-        </button>
+<body class="bg-[#030005] text-gray-200 min-h-screen p-6">
+
+    <div id="auth-section" class="flex h-screen items-center justify-center">
+        <button id="login-btn" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-bold transition">Sign In with Google</button>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="admin-panel" class="hidden max-w-5xl mx-auto glass p-8 rounded-2xl">
-        <nav class="flex gap-4 mb-8 border-b border-red-900 pb-4">
-            <button onclick="showTab('ranks')" class="text-red-400 font-bold hover:text-white">Manage Ranks</button>
-            <button onclick="showTab('crates')" class="text-red-400 font-bold hover:text-white">Manage Crates</button>
-            <button onclick="showTab('orders')" class="text-red-400 font-bold hover:text-white">Live Orders</button>
-        </nav>
+    <div id="admin-panel" class="hidden max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-red-500">Master Admin</h1>
+            <nav class="flex gap-4">
+                <button onclick="showTab('ranks')" class="bg-red-900/30 px-4 py-2 rounded">Ranks</button>
+                <button onclick="showTab('crates')" class="bg-red-900/30 px-4 py-2 rounded">Crates</button>
+            </nav>
+        </header>
 
-        <div id="ranks" class="tab-content active space-y-4">
-            <input type="text" id="r-name" placeholder="Rank Name" class="w-full bg-[#1a0000] p-3 rounded-lg border border-red-800">
-            <input type="number" id="r-price" placeholder="Price" class="w-full bg-[#1a0000] p-3 rounded-lg border border-red-800">
-            <textarea id="r-desc" placeholder="Perks/Description" class="w-full bg-[#1a0000] p-3 rounded-lg border border-red-800"></textarea>
-            <button onclick="addRank()" class="bg-red-600 px-6 py-2 rounded-lg font-bold">Save Rank</button>
-        </div>
-
-        <div id="orders" class="tab-content">
-            <div id="order-list" class="grid gap-4"></div>
+        <div id="ranks" class="tab-content active glass-card p-6 rounded-xl">
+            <h2 class="text-xl font-bold mb-4">Add Rank</h2>
+            <input type="text" id="r-name" placeholder="Rank Name" class="w-full bg-black border border-red-800 p-3 rounded mb-3">
+            
+            <div class="flex gap-4">
+                <input type="number" id="r-price" placeholder="Price" class="w-full bg-black border border-red-800 p-3 rounded mb-3">
+                <select id="r-currency" class="bg-black border border-red-800 p-3 rounded mb-3">
+                    </select>
+            </div>
+            <button onclick="addRank()" class="w-full bg-red-600 py-3 rounded font-bold">Deploy Rank</button>
         </div>
     </div>
 
     <script type="module" src="js/admin.js"></script>
     <script>
+        // Currency List
+        const currencies = ["USD", "PKR", "EUR", "GBP", "INR", "AED", "SAR", "CAD", "AUD"];
+        const select = document.getElementById('r-currency');
+        currencies.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+        
         function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
