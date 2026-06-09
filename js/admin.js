@@ -17,7 +17,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// Google Sign-In
 const provider = new GoogleAuthProvider();
 
 document.getElementById('login-btn').addEventListener('click', () => {
@@ -32,21 +31,23 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Admin Functions
+// Admin Functions with Currency Support
 window.addRank = () => {
     push(ref(db, 'ranks'), {
         name: document.getElementById('r-name').value,
         price: document.getElementById('r-price').value,
+        currency: document.getElementById('r-currency').value, // Currency selection
         description: document.getElementById('r-desc').value
-    }).then(() => alert("Rank Added!"));
+    }).then(() => alert("Rank Added Successfully!"));
 };
 
 window.addCrate = () => {
     push(ref(db, 'crates'), {
         name: document.getElementById('c-name').value,
         type: document.getElementById('c-type').value,
-        price: document.getElementById('c-price').value
-    }).then(() => alert("Crate Added!"));
+        price: document.getElementById('c-price').value,
+        currency: document.getElementById('c-currency').value // Added currency for crates too
+    }).then(() => alert("Crate Added Successfully!"));
 };
 
 function loadOrders() {
@@ -56,15 +57,19 @@ function loadOrders() {
         if (snapshot.exists()) {
             snapshot.forEach(child => {
                 const order = child.val();
-                list.innerHTML += `<div class="p-4 border-b border-red-900">User: ${order.email} | Item: ${order.item} | Status: ${order.status}</div>`;
+                list.innerHTML += `
+                    <div class="p-4 mb-2 bg-gray-900 border-l-4 border-red-600 rounded">
+                        <span class="font-bold text-red-400">${order.email}</span> 
+                        requested <strong>${order.item}</strong> 
+                        Status: <span class="text-green-400">${order.status}</span>
+                    </div>`;
             });
         } else {
-            list.innerHTML = '<p>No orders yet.</p>';
+            list.innerHTML = '<p class="text-gray-500 text-center">No orders yet.</p>';
         }
     });
 }
 
-// Ensure showTab is globally accessible
 window.showTab = (id) => {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.getElementById(id).classList.add('active');
