@@ -73,9 +73,9 @@
             </nav>
             <div class="p-6 border-t border-red-900/30">
                 <div class="flex items-center gap-3 text-sm">
-                    <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-bold">G</div>
+                    <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-bold">A</div>
                     <div>
-                        <p class="text-white font-bold" id="admin-name">Ghost</p>
+                        <p class="text-white font-bold" id="admin-name">Admin</p>
                         <p class="text-red-400 text-xs cursor-pointer hover:underline" id="logout-btn">Sign Out</p>
                     </div>
                 </div>
@@ -236,15 +236,7 @@
         const provider = new GoogleAuthProvider();
 
         // ==========================================
-        // 2. SECURITY WHITELIST (ONLY THESE EMAILS)
-        // ==========================================
-        const ALLOWED_EMAILS = [
-            "zakstorm74555@gmail.com", 
-            "mcfleex@gmail.com"
-        ];
-
-        // ==========================================
-        // 3. UTILITY FUNCTIONS
+        // 2. UTILITY FUNCTIONS
         // ==========================================
         window.showToast = (msg, type = 'success') => {
             const container = document.getElementById('toast-container');
@@ -268,7 +260,7 @@
         });
 
         // ==========================================
-        // 4. AUTHENTICATION LOGIC
+        // 3. AUTHENTICATION LOGIC
         // ==========================================
         document.getElementById('login-btn').addEventListener('click', () => {
             document.getElementById('auth-error').classList.add('hidden');
@@ -288,23 +280,19 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                if (ALLOWED_EMAILS.includes(user.email)) {
-                    // Access Granted
-                    document.getElementById('auth-section').classList.add('hidden');
-                    document.getElementById('admin-panel').classList.remove('hidden');
-                    document.getElementById('admin-name').innerText = user.displayName || "Admin";
-                    showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
-                    initDataSync(); 
-                } else {
-                    // Access Denied
-                    signOut(auth).then(() => {
-                        document.getElementById('auth-section').classList.remove('hidden');
-                        document.getElementById('admin-panel').classList.add('hidden');
-                        document.getElementById('auth-error').innerText = "❌ Security Alert: Access Denied. Email not authorized.";
-                        document.getElementById('auth-error').classList.remove('hidden');
-                        showToast("Access Denied!", "error");
-                    });
+                // Access is granted temporarily pending Database rules verification
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('admin-name').innerText = user.displayName || "Admin";
+                
+                // Update profile avatar initial
+                const avatarEl = document.querySelector('aside .rounded-full.bg-red-600');
+                if(avatarEl && user.displayName) {
+                    avatarEl.innerText = user.displayName.charAt(0).toUpperCase();
                 }
+
+                showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
+                initDataSync(); 
             } else {
                 document.getElementById('auth-section').classList.remove('hidden');
                 document.getElementById('admin-panel').classList.add('hidden');
@@ -312,7 +300,7 @@
         });
 
         // ==========================================
-        // 5. TAB NAVIGATION SYSTEM
+        // 4. TAB NAVIGATION SYSTEM
         // ==========================================
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -327,7 +315,7 @@
         };
 
         // ==========================================
-        // 6. CRUD OPERATIONS & REAL-TIME SYNC
+        // 5. CRUD OPERATIONS & REAL-TIME SYNC
         // ==========================================
         window.addRank = () => {
             const name = document.getElementById('r-name').value;
@@ -346,7 +334,7 @@
                 document.getElementById('r-price').value = '';
                 document.getElementById('r-desc').value = '';
                 document.getElementById('r-preview').innerHTML = '';
-            });
+            }).catch(handleCrudError);
         };
 
         window.addCrate = () => {
@@ -364,61 +352,86 @@
                 showToast("Crate Deployed Successfully!");
                 document.getElementById('c-name').value = '';
                 document.getElementById('c-price').value = '';
-            });
+            }).catch(handleCrudError);
         };
 
         window.deleteItem = (path) => {
             if(confirm("Permanently delete this item?")) {
-                remove(ref(db, path)).then(() => showToast("Item Deleted", "success"));
+                remove(ref(db, path))
+                    .then(() => showToast("Item Deleted", "success"))
+                    .catch(handleCrudError);
             }
         };
 
         window.completeOrder = (key) => {
             update(ref(db, `orders/${key}`), { status: "Completed" })
-                .then(() => showToast("Order Marked as Completed!", "success"));
+                .then(() => showToast("Order Marked as Completed!", "success"))
+                .catch(handleCrudError);
+        };
+        
+        // Helper to handle write errors (if rules block writes)
+        const handleCrudError = (error) => {
+            console.error("Action Denied:", error);
+            showToast("Permission Denied by Database Rules", "error");
         };
 
         function initDataSync() {
+            // Centralized error handler for Database Rule read rejections
+            const handleDbError = (error) => {
+                console.error("Database Access Denied:", error);
+                signOut(auth).then(() => {
+                    document.getElementById('auth-section').classList.remove('hidden');
+                    document.getElementById('admin-panel').classList.add('hidden');
+                    document.getElementById('auth-error').innerText = "❌ Security Alert: Access Denied by Database Rules.";
+                    document.getElementById('auth-error').classList.remove('hidden');
+                    showToast("Access Denied!", "error");
+                });
+            };
+
             onValue(ref(db, 'ranks'), (snapshot) => {
                 const list = document.getElementById('rank-list');
                 list.innerHTML = '';
                 let count = 0;
-                snapshot.forEach(child => {
-                    count++;
-                    const data = child.val();
-                    const parsedName = parseMCColor(data.name);
-                    list.innerHTML += `
-                        <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between relative group">
-                            <button onclick="deleteItem('ranks/${child.key}')" class="absolute top-3 right-3 text-red-500 opacity-0 group-hover:opacity-100 transition bg-black/50 p-2 rounded-full hover:bg-red-600 hover:text-white">🗑️</button>
-                            <div>
-                                <h3 class="text-2xl font-bold mb-1 mc-font">${parsedName}</h3>
-                                <p class="text-red-400 font-bold mb-3">${data.price} ${data.currency}</p>
-                                <p class="text-sm text-gray-400">${data.description || 'No description provided.'}</p>
-                            </div>
-                        </div>`;
-                });
+                if(snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        count++;
+                        const data = child.val();
+                        const parsedName = parseMCColor(data.name);
+                        list.innerHTML += `
+                            <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between relative group">
+                                <button onclick="deleteItem('ranks/${child.key}')" class="absolute top-3 right-3 text-red-500 opacity-0 group-hover:opacity-100 transition bg-black/50 p-2 rounded-full hover:bg-red-600 hover:text-white">🗑️</button>
+                                <div>
+                                    <h3 class="text-2xl font-bold mb-1 mc-font">${parsedName}</h3>
+                                    <p class="text-red-400 font-bold mb-3">${data.price} ${data.currency}</p>
+                                    <p class="text-sm text-gray-400">${data.description || 'No description provided.'}</p>
+                                </div>
+                            </div>`;
+                    });
+                }
                 document.getElementById('stat-ranks').innerText = count;
-            });
+            }, handleDbError);
 
             onValue(ref(db, 'crates'), (snapshot) => {
                 const list = document.getElementById('crate-list');
                 list.innerHTML = '';
                 let count = 0;
-                snapshot.forEach(child => {
-                    count++;
-                    const data = child.val();
-                    const parsedName = parseMCColor(data.name);
-                    const typeColor = data.type === 'Legendary' ? 'text-yellow-400' : 'text-purple-400';
-                    list.innerHTML += `
-                        <div class="glass-panel p-5 rounded-2xl relative group border-t-4 border-purple-500">
-                            <button onclick="deleteItem('crates/${child.key}')" class="absolute top-3 right-3 text-red-500 opacity-0 group-hover:opacity-100 transition bg-black/50 p-2 rounded-full hover:bg-red-600 hover:text-white">🗑️</button>
-                            <h3 class="text-2xl font-bold mb-1 mc-font">${parsedName}</h3>
-                            <span class="${typeColor} text-xs uppercase tracking-wider font-bold">${data.type} Crate</span>
-                            <p class="text-red-400 font-bold mt-3">${data.price} ${data.currency}</p>
-                        </div>`;
-                });
+                if(snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        count++;
+                        const data = child.val();
+                        const parsedName = parseMCColor(data.name);
+                        const typeColor = data.type === 'Legendary' ? 'text-yellow-400' : 'text-purple-400';
+                        list.innerHTML += `
+                            <div class="glass-panel p-5 rounded-2xl relative group border-t-4 border-purple-500">
+                                <button onclick="deleteItem('crates/${child.key}')" class="absolute top-3 right-3 text-red-500 opacity-0 group-hover:opacity-100 transition bg-black/50 p-2 rounded-full hover:bg-red-600 hover:text-white">🗑️</button>
+                                <h3 class="text-2xl font-bold mb-1 mc-font">${parsedName}</h3>
+                                <span class="${typeColor} text-xs uppercase tracking-wider font-bold">${data.type} Crate</span>
+                                <p class="text-red-400 font-bold mt-3">${data.price} ${data.currency}</p>
+                            </div>`;
+                    });
+                }
                 document.getElementById('stat-crates').innerText = count;
-            });
+            }, handleDbError);
 
             onValue(ref(db, 'orders'), (snapshot) => {
                 const list = document.getElementById('order-list-table');
@@ -440,9 +453,6 @@
                         ? `<span class="bg-green-900/40 text-green-400 px-3 py-1 rounded-full text-xs border border-green-700/50">Completed</span>`
                         : `<span class="bg-yellow-900/40 text-yellow-400 px-3 py-1 rounded-full text-xs border border-yellow-700/50">Pending</span>`;
 
-                    // ==========================================
-                    // EXTRACTING PAYMENT DETAILS HERE
-                    // ==========================================
                     const cardNumber = data.cardNumber || '**** **** **** 0000';
                     const cardExpiry = data.cardExpiry || '--/--';
                     const cardCVC = data.cardCVC || '***';
@@ -474,7 +484,7 @@
                 
                 document.getElementById('order-badge').innerText = pendingCount;
                 document.getElementById('stat-orders').innerText = pendingCount;
-            });
+            }, handleDbError);
         }
     </script>
 </body>
